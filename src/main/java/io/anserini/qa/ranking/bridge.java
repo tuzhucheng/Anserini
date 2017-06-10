@@ -1,4 +1,4 @@
-package io.anserini.embeddings;
+package io.anserini.qa.ranking;
 
 import org.kohsuke.args4j.Option;
 import org.nd4j.linalg.api.ndarray.INDArray;

@@ -1,4 +1,4 @@
-package io.anserini.embeddings;
+package io.anserini.qa.ranking;
 
 import io.anserini.index.generator.LuceneDocumentGenerator;
 import org.apache.commons.lang.StringUtils;
