@@ -56,9 +56,7 @@ public class prepareFeature {
     return stopWordRemoved;
   }
 
-  public List<Double> computeOverlap(String question, String answer, boolean stop) throws Exception {
-    List<Double> overlapScores = new ArrayList<>();
-
+  public double computeOverlap(String question, String answer, boolean stop) throws Exception {
     Set<String> questionSet = new HashSet<> (Arrays.asList(question.split("\\t")));
     Set<String> answerSet = new HashSet<> (Arrays.asList(answer.split("\\t")));
     Set<String> commonSet = new HashSet <>(questionSet);
@@ -69,14 +67,11 @@ public class prepareFeature {
     }
 
     double overlap = (commonSet.size() * 1.0) / (questionSet.size() + answerSet.size());
-    overlapScores.add(overlap);
-
-    return overlapScores;
+    return overlap;
   }
 
-  public List<Double> idfWeightedOverlap(String question, String answer, boolean stop)
+  public double idfWeightedOverlap(String question, String answer, boolean stop)
           throws ParseException, IOException {
-    List<Double> idfWeightedOverlap = new ArrayList<>();
     ClassicSimilarity similarity = new ClassicSimilarity();
     EnglishAnalyzer ea = stop ? new EnglishAnalyzer(CharArraySet.EMPTY_SET) : new EnglishAnalyzer(StopFilter.makeStopSet(stopWords));
     QueryParser qp = new QueryParser(LuceneDocumentGenerator.FIELD_BODY, ea);
@@ -94,9 +89,7 @@ public class prepareFeature {
       overlap +=  similarity.idf(reader.docFreq(t), reader.numDocs());
     }
     overlap /= (questionSet.size() + answerSet.size());
-    idfWeightedOverlap.add(overlap);
-
-    return idfWeightedOverlap;
+    return overlap;
   }
 
 }
