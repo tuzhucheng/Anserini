@@ -23,12 +23,12 @@ import java.util.*;
  * Created by royalsequeira on 2017-06-02.
  */
 
-public class prepareFeature {
+public class FeaturePreparer {
   private List<String> stopWords = null;
   private final FSDirectory directory;
   private final DirectoryReader reader;
 
-  public prepareFeature(String index) throws IOException {
+  public FeaturePreparer(String index) throws IOException {
     stopWords = new ArrayList<>();
     this.directory = FSDirectory.open(new File(index).toPath());
     this.reader = DirectoryReader.open(directory);

@@ -4,7 +4,6 @@ import io.anserini.embeddings.WordEmbeddingDictionary;
 import org.kohsuke.args4j.*;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.rng.Random;
-import org.nd4j.linalg.cpu.nativecpu.rng.CpuNativeRandom;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
@@ -12,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class bridge {
+public class Bridge {
   private int vocabSize;
   private int vectorDimension;
   private Map<Integer, String> vocabDictionary;
@@ -37,7 +36,7 @@ public class bridge {
     public String output = "run";
   }
 
-  public bridge(String index, String w2vCache, String model) throws IOException {
+  public Bridge(String index, String w2vCache, String model) throws IOException {
 //    ToDo: initialize torch seed
 //    ToDo: load model
 
@@ -48,29 +47,28 @@ public class bridge {
   }
 
   public void preloadCachedEmbeddings(String w2vCache) throws IOException {
-    List<String> lines = Files.readAllLines(Paths.get(w2vCache));
-    String[] sizeDimension = lines.get(0).trim().split("\\t");
+    List<String> lines = Files.readAllLines(Paths.get(w2vCache + ".dimensions"));
+    String[] sizeDimension = lines.get(0).trim().split("\\s+");
     this.vocabSize = Integer.parseInt(sizeDimension[0]);
     this.vectorDimension = Integer.parseInt(sizeDimension[1]);
 
 //    ToDo: initialize W
     try(BufferedReader br = new BufferedReader(new FileReader(w2vCache + ".vocab"))) {
       int i = 0;
-      String line = br.readLine();
+      String line;
 
-      while (line != null) {
-        line = br.readLine();
+      while ((line = br.readLine()) != null) {
         vocabDictionary.put(i, line.trim());
         i++;
       }
-      Random rng = new CpuNativeRandom();
+      Random rng = Nd4j.getRandom();
       unknownVector = Nd4j.rand(vocabSize, 1, -0.25, 0.25, rng);
     }
   }
 
 
   public List<INDArray> makeInputMatrix(String sentence) throws IOException {
-    String[] terms = sentence.trim().split("\\t");
+    String[] terms = sentence.trim().split("\\s+");
     String[] reducedTerms = Arrays.copyOfRange(terms, 0, 60);
     List<INDArray> sentenceEmbedding = new ArrayList<>();
 
@@ -87,7 +85,7 @@ public class bridge {
 
   public Map<String, Double> rerankCandidates(String question, List<String> answers, String index) throws Exception {
     Map<String, Double> sentScore = new HashMap<>();
-    prepareFeature pF = new prepareFeature(index);
+    FeaturePreparer pF = new FeaturePreparer(index);
 
     for (String answer : answers) {
       double overlap = pF.computeOverlap(question, answer, false);
@@ -117,7 +115,7 @@ public class bridge {
 
 
   public static void main(String[] args) throws Exception {
-    bridge.Args bridgeArgs = new bridge.Args();
+    Bridge.Args bridgeArgs = new Bridge.Args();
     CmdLineParser parser = new CmdLineParser(bridgeArgs, ParserProperties.defaults().withUsageWidth(90));
 
     try {
@@ -125,11 +123,11 @@ public class bridge {
     } catch (CmdLineException e) {
       System.err.println(e.getMessage());
       parser.printUsage(System.err);
-      System.err.println("Example: "+ bridge.class.getSimpleName() +
+      System.err.println("Example: "+ Bridge.class.getSimpleName() +
               parser.printExample(OptionHandlerFilter.REQUIRED));
       return;
     }
-    bridge br = new bridge(bridgeArgs.index, bridgeArgs.w2vCacheFile, bridgeArgs.model);
+    Bridge br = new Bridge(bridgeArgs.index, bridgeArgs.w2vCacheFile, bridgeArgs.model);
 
     String[] config = {"raw_dev", "raw_test"};
 
