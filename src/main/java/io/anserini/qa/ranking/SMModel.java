@@ -71,7 +71,6 @@ public class SMModel {
         // Hidden layer
         INDArray hiddenLayer = joinLayer.mmul(hiddenLayerWeights).addi(hiddenLayerBiases);
         Nd4j.getExecutioner().exec(new Tanh(hiddenLayer));
-        Nd4j.getExecutioner().exec(new DropOut(hiddenLayer, 0.5));
         hiddenLayer.muli(1 / (1 - 0.5));
 
         // Softmax

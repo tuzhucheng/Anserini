@@ -26,8 +26,8 @@ public class SMModelTest {
             SMModel model = new SMModel(avroSchemaPath, avroWeightsPath);
             INDArray finalLayer = model.forward(question, answer, externalFeatures);
 
-            assertEquals(String.valueOf(-0.2428565), String.valueOf(Math.floor(finalLayer.getDouble(0) * 1e7) / 1e7));
-            assertEquals(String.valueOf(-1.5342565), String.valueOf(Math.floor(finalLayer.getDouble(1) * 1e7) / 1e7));
+            assertEquals(String.valueOf(-0.4261035), String.valueOf(Math.floor(finalLayer.getDouble(0) * 1e7) / 1e7));
+            assertEquals(String.valueOf(-1.0585712), String.valueOf(Math.floor(finalLayer.getDouble(1) * 1e7) / 1e7));
         } catch (IOException e) {
             fail(e.getMessage());
         }
