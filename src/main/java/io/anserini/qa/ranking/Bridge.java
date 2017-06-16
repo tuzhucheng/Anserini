@@ -14,7 +14,8 @@ import java.util.*;
 public class Bridge {
   private int vocabSize;
   private int vectorDimension;
-  private Map<Integer, String> vocabDictionary;
+  private SMModel model;
+  private Map<String, Integer> vocabDictionary;
   private INDArray unknownVector;
   private WordEmbeddingDictionary wordEmbeddingDictionary;
 
@@ -26,7 +27,7 @@ public class Bridge {
     @Option(name = "-w2vCache", metaVar = "[Path]", required = true, usage = "Word embedding cache file")
     public String w2vCacheFile;
 
-    @Option(name = "-model", metaVar = "[Path]", required = true, usage = "model path")
+    @Option(name = "-model", metaVar = "[Path]", required = true, usage = "path to the model weights")
     public String model;
 
     @Option(name = "-dataset", metaVar = "[Path]", required = true, usage = "path of the TrecQA dataset folder")
@@ -36,11 +37,12 @@ public class Bridge {
     public String output = "run";
   }
 
-  public Bridge(String index, String w2vCache, String model) throws IOException {
-//    ToDo: initialize torch seed
-//    ToDo: load model
+  public Bridge(String index, String w2vCache, String weightsPath) throws IOException {
+    Nd4j.getRandom().setSeed(1234);
+    String avroSchemaPath = this.getClass().getResource("weights.avsc").getPath();
+    model = new SMModel(avroSchemaPath, weightsPath);
 
-    this.vocabDictionary = new HashMap();
+    this.vocabDictionary = new HashMap<>();
     wordEmbeddingDictionary = new WordEmbeddingDictionary(index);
     preloadCachedEmbeddings(w2vCache);
 
@@ -58,7 +60,7 @@ public class Bridge {
       String line;
 
       while ((line = br.readLine()) != null) {
-        vocabDictionary.put(i, line.trim());
+        vocabDictionary.put(line.trim(), i);
         i++;
       }
       Random rng = Nd4j.getRandom();
@@ -69,8 +71,10 @@ public class Bridge {
 
   public List<INDArray> makeInputMatrix(String sentence) throws IOException {
     String[] terms = sentence.trim().split("\\s+");
-    String[] reducedTerms = Arrays.copyOfRange(terms, 0, 60);
+    String[] reducedTerms = Arrays.copyOfRange(terms, 0, Math.min(60, terms.length));
     List<INDArray> sentenceEmbedding = new ArrayList<>();
+
+    List<String> keysAsArray = new ArrayList<>(vocabDictionary.keySet());
 
     for (String term : reducedTerms) {
       if (vocabDictionary.keySet().contains(term)) {
