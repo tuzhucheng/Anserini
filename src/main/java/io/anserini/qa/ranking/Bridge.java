@@ -5,6 +5,8 @@ import org.kohsuke.args4j.*;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.rng.Random;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -51,8 +53,8 @@ public class Bridge {
   public void preloadCachedEmbeddings(String w2vCache) throws IOException {
     List<String> lines = Files.readAllLines(Paths.get(w2vCache + ".dimensions"));
     String[] sizeDimension = lines.get(0).trim().split("\\s+");
-    this.vocabSize = Integer.parseInt(sizeDimension[0]);
-    this.vectorDimension = Integer.parseInt(sizeDimension[1]);
+    vocabSize = Integer.parseInt(sizeDimension[0]);
+    vectorDimension = Integer.parseInt(sizeDimension[1]);
 
 //    ToDo: initialize W
     try(BufferedReader br = new BufferedReader(new FileReader(w2vCache + ".vocab"))) {
@@ -64,24 +66,31 @@ public class Bridge {
         i++;
       }
       Random rng = Nd4j.getRandom();
-      unknownVector = Nd4j.rand(vocabSize, 1, -0.25, 0.25, rng);
+      unknownVector = Nd4j.rand(1, vectorDimension, -0.25, 0.25, rng);
     }
   }
 
 
-  public List<INDArray> makeInputMatrix(String sentence) throws IOException {
+  public INDArray makeInputMatrix(String sentence) throws IOException {
     String[] terms = sentence.trim().split("\\s+");
     String[] reducedTerms = Arrays.copyOfRange(terms, 0, Math.min(60, terms.length));
-    List<INDArray> sentenceEmbedding = new ArrayList<>();
+    INDArray sentenceEmbedding = Nd4j.zeros(50, reducedTerms.length);
 
-    List<String> keysAsArray = new ArrayList<>(vocabDictionary.keySet());
-
-    for (String term : reducedTerms) {
+    for (int i = 0; i < reducedTerms.length; i++) {
+      String term = reducedTerms[i];
+      INDArray wordVector;
       if (vocabDictionary.keySet().contains(term)) {
-        sentenceEmbedding.add(Nd4j.create(wordEmbeddingDictionary.getEmbeddingVector(term)));
+        try {
+          wordVector = Nd4j.create(wordEmbeddingDictionary.getEmbeddingVector(term));
+        } catch (ArrayIndexOutOfBoundsException e) {
+          System.out.println(term + " is in dimensions but not in index.");
+          wordVector = unknownVector;
+        }
       } else {
-        sentenceEmbedding.add(unknownVector);
+        wordVector = unknownVector;
       }
+      INDArrayIndex columnSlice[] = { NDArrayIndex.all(), NDArrayIndex.point(i) };
+      sentenceEmbedding.put(columnSlice, wordVector);
     }
     return sentenceEmbedding;
   }
@@ -90,6 +99,7 @@ public class Bridge {
   public Map<String, Double> rerankCandidates(String question, List<String> answers, String index) throws Exception {
     Map<String, Double> sentScore = new HashMap<>();
     FeaturePreparer pF = new FeaturePreparer(index);
+    INDArray questionEmbedding = makeInputMatrix(question);
 
     for (String answer : answers) {
       double overlap = pF.computeOverlap(question, answer, false);
@@ -97,20 +107,13 @@ public class Bridge {
       double overlapStopWords = pF.computeOverlap(question, answer, true);
       double idfOverlapStopWords = pF.idfWeightedOverlap(question, answer, true);
 
-      List<Double> externalFeatures = new ArrayList<>();
-      externalFeatures.add(overlap);
-      externalFeatures.add(idfOverlap);
-      externalFeatures.add(overlapStopWords);
-      externalFeatures.add(idfOverlapStopWords);
+      double[] rawExternalFeatures = {overlap, idfOverlap, overlapStopWords, idfOverlapStopWords};
+      INDArray externalFeatures = Nd4j.create(rawExternalFeatures);
 
-      // No batching for now:
-
-      List<INDArray> questionEmbedding = makeInputMatrix(question);
-      List<INDArray> answerEmbedding = makeInputMatrix(question);
-      // Todo: @michael, following code in Java
-      // pred = self.model(questionEmbeeding, answerEmbedding, externalFeatures)
-      // pred = torch.exp(pred)
-      double pred = 0;
+      // TODO Batching
+      INDArray answerEmbedding = makeInputMatrix(answer);
+      INDArray logPreds = model.forward(questionEmbedding, answerEmbedding, externalFeatures);
+      double pred = Math.exp(logPreds.getDouble(1));
       sentScore.put(answer, pred);
     }
 
