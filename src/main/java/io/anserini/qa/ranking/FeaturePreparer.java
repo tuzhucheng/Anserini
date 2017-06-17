@@ -57,8 +57,8 @@ public class FeaturePreparer {
   }
 
   public double computeOverlap(String question, String answer, boolean stop) throws Exception {
-    Set<String> questionSet = new HashSet<> (Arrays.asList(question.split("\\t")));
-    Set<String> answerSet = new HashSet<> (Arrays.asList(answer.split("\\t")));
+    Set<String> questionSet = new HashSet<> (Arrays.asList(question.split("\\s")));
+    Set<String> answerSet = new HashSet<> (Arrays.asList(answer.split("\\s")));
     Set<String> commonSet = new HashSet <>(questionSet);
     commonSet.retainAll(answerSet);
 
@@ -76,8 +76,8 @@ public class FeaturePreparer {
     EnglishAnalyzer ea = stop ? new EnglishAnalyzer(CharArraySet.EMPTY_SET) : new EnglishAnalyzer(StopFilter.makeStopSet(stopWords));
     QueryParser qp = new QueryParser(LuceneDocumentGenerator.FIELD_BODY, ea);
 
-    Set<String> questionSet = new HashSet<> (Arrays.asList(question.split("\\t")));
-    Set<String> answerSet = new HashSet<> (Arrays.asList(answer.split("\\t")));
+    Set<String> questionSet = new HashSet<> (Arrays.asList(question.split("\\s")));
+    Set<String> answerSet = new HashSet<> (Arrays.asList(answer.split("\\s")));
     Set<String> commonSet = new HashSet <>(questionSet);
     commonSet.retainAll(answerSet);
 
