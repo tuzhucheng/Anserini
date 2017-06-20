@@ -83,10 +83,14 @@ public class FeaturePreparer {
 
     double overlap = 0.0;
     for (String term : commonSet) {
-      TermQuery q = (TermQuery) qp.parse(term);
-      Term t = q.getTerm();
+      try {
+        TermQuery q = (TermQuery) qp.parse(term);
+        Term t = q.getTerm();
 
-      overlap +=  similarity.idf(reader.docFreq(t), reader.numDocs());
+        overlap +=  similarity.idf(reader.docFreq(t), reader.numDocs());
+      } catch (Exception e) {
+        continue;
+      }
     }
     overlap /= (questionSet.size() + answerSet.size());
     return overlap;

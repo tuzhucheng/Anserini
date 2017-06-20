@@ -27,7 +27,7 @@ public class SMModelTest {
             INDArray finalLayer = model.forward(question, answer, externalFeatures);
 
             assertEquals(String.valueOf(-7.61E-5), String.valueOf(Math.floor(finalLayer.getDouble(0) * 1e7) / 1e7));
-            assertEquals(String.valueOf(-9.4842978), String.valueOf(Math.floor(finalLayer.getDouble(1) * 1e7) / 1e7));
+            assertEquals(String.valueOf(-9.4843), String.valueOf(Math.floor(finalLayer.getDouble(1) * 1e4) / 1e4));
         } catch (IOException e) {
             fail(e.getMessage());
         }

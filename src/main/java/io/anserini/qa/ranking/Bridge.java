@@ -77,7 +77,9 @@ public class Bridge {
     INDArray sentenceEmbedding = Nd4j.zeros(50, reducedTerms.length);
 
     for (int i = 0; i < reducedTerms.length; i++) {
+      INDArrayIndex columnSlice[] = { NDArrayIndex.all(), NDArrayIndex.point(i) };
       String term = reducedTerms[i];
+
       INDArray wordVector;
       if (vocabDictionary.keySet().contains(term)) {
         try {
@@ -89,7 +91,6 @@ public class Bridge {
       } else {
         wordVector = unknownVector;
       }
-      INDArrayIndex columnSlice[] = { NDArrayIndex.all(), NDArrayIndex.point(i) };
       sentenceEmbedding.put(columnSlice, wordVector);
     }
     return sentenceEmbedding;
@@ -136,12 +137,12 @@ public class Bridge {
     }
     Bridge br = new Bridge(bridgeArgs.index, bridgeArgs.w2vCacheFile, bridgeArgs.model);
 
-    String[] config = {"raw_dev", "raw_test"};
+    String[] config = {"raw-dev", "raw-test"};
 
     for (String split : config) {
-      BufferedReader questionFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/a.toks"));
-      BufferedReader answerFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/b.toks"));
-      BufferedReader idFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/id.txt"));
+      BufferedReader questionFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/" + split + "/a.toks"));
+      BufferedReader answerFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/" + split + "/b.toks"));
+      BufferedReader idFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/" + split + "/id.txt"));
 
       BufferedWriter outputFile = new BufferedWriter(new FileWriter(bridgeArgs.output + ".TrecQA." + split + ".txt"));
 
