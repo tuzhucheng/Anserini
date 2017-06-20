@@ -1,3 +1,4 @@
+import argparse
 import sys
 sys.path.append('gen-py')
 
@@ -9,7 +10,7 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
 
-def main():
+def main(question, answer):
 
     # Make socket
     transport = TSocket.TSocket('localhost', 9090)
@@ -26,11 +27,18 @@ def main():
     # Connect!
     transport.open()
 
-    score = client.getScore('My Question', 'My Answer')
-    print('Score: ', score)
+    score = client.getScore(question, answer)
+    print('Question: ', question)
+    print('Answer: ', answer)
+    print('Similarity Score: ', score)
 
     transport.close()
 
 
 if __name__ == '__main__':
-    main()
+    ap = argparse.ArgumentParser(description='Anserini Thrift Client for QA')
+    ap.add_argument('question', help='Question')
+    ap.add_argument('answer', help='Answer')
+    args = ap.parse_args()
+
+    main(args.question, args.answer)
