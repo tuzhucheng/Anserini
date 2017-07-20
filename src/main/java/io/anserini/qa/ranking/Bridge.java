@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Bridge {
   private int vocabSize;
@@ -139,6 +140,8 @@ public class Bridge {
 
     String[] config = {"raw-dev", "raw-test"};
 
+    long totalElapsed = 0;
+    int count = 0;
     for (String split : config) {
       BufferedReader questionFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/" + split + "/a.toks"));
       BufferedReader answerFile = new BufferedReader(new FileReader(bridgeArgs.dataset + "/" + split + "/b.toks"));
@@ -161,7 +164,12 @@ public class Bridge {
 
         // collect all the answers correponding to an id and rerank
         if (!old_id.equals(id) && !old_id.equals("0")) {
+          long start = System.nanoTime();
           Map<String, Double> sentenceScore = br.rerankCandidates(previousQuestion, answerList, bridgeArgs.index);
+          long end = System.nanoTime();
+          long elapsed = end - start;
+          totalElapsed += elapsed;
+          count += 1;
 
           // 32.1 0 1 0 0.13309887051582336 smmodel
           int i = 0;
@@ -176,8 +184,13 @@ public class Bridge {
         answerList.add(answer);
         old_id = id;
       }
+
       outputFile.close();
     }
+    long totalElapsedSeconds = TimeUnit.NANOSECONDS.toSeconds(totalElapsed);
+    System.out.println("Elapsed time (s): " + totalElapsedSeconds);
+    System.out.println("Questions: " + count);
+    System.out.println("QPS: " + count * 1.0 / totalElapsedSeconds);
   }
 
 }
