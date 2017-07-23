@@ -15,3 +15,5 @@ config.cfg
 log*
 tmp-files
 lucene-index*
+data/
+output.TrecQA.raw-dev.txt

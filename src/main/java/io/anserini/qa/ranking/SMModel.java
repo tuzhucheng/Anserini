@@ -1,6 +1,7 @@
 package io.anserini.qa.ranking;
 
 import io.anserini.nn.Conv1d;
+import io.anserini.nn.DL4JConv1d;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.transforms.LogSoftMax;
 import org.nd4j.linalg.api.ops.impl.transforms.Tanh;
@@ -34,7 +35,7 @@ public class SMModel {
         this.softmaxLayerBiases = weights.get(7);
     }
 
-    private INDArray getConvFeatureMaps(INDArray input, INDArray filters, INDArray biases) {
+    private INDArray getConvFeatureMapsND4J(INDArray input, INDArray filters, INDArray biases) {
         int kernelWidth = 5;
         int padding = 4;
         INDArray questionConvFeatureMaps = Nd4j.zeros(100, input.columns() + 2*padding - kernelWidth + 1);
@@ -50,10 +51,19 @@ public class SMModel {
         return questionConvFeatureMaps;
     }
 
+    private INDArray getConvFeatureMapsDL4J(INDArray input, INDArray filters, INDArray biases) {
+        int kernelWidth = 5;
+        int padding = 4;
+        DL4JConv1d conv = new DL4JConv1d(1, filters.size(0), kernelWidth, 1, 4);
+        INDArray questionConvFeatureMaps = conv.forward(input, filters, biases);
+
+        return questionConvFeatureMaps;
+    }
+
     public INDArray forward(INDArray question, INDArray answer, INDArray externalFeatures) {
         // Convolution
-        INDArray questionConvFeatureMaps = getConvFeatureMaps(question, questionConvFilters, questionConvFilterBiases);
-        INDArray answerConvFeatureMaps = getConvFeatureMaps(answer, answerConvFilters, answerConvFilterBiases);
+        INDArray questionConvFeatureMaps = getConvFeatureMapsDL4J(question, questionConvFilters, questionConvFilterBiases);
+        INDArray answerConvFeatureMaps = getConvFeatureMapsDL4J(answer, answerConvFilters, answerConvFilterBiases);
 
         // Pooling
         INDArray questionPooled = Nd4j.max(questionConvFeatureMaps, 1);
