@@ -22,6 +22,8 @@ public class SMModel {
     private INDArray hiddenLayerBiases;
     private INDArray softmaxLayerWeights;
     private INDArray softmaxLayerBiases;
+    private DL4JConv1d questionConv;
+    private DL4JConv1d answerConv;
 
     public SMModel(String avroWeightsSchema, String avroWeights) throws IOException {
         ArrayList<INDArray> weights = AvroLoader.loadND4JArray(avroWeightsSchema, avroWeights);
@@ -33,37 +35,15 @@ public class SMModel {
         this.hiddenLayerBiases = weights.get(5);
         this.softmaxLayerWeights = weights.get(6).transposei();
         this.softmaxLayerBiases = weights.get(7);
-    }
 
-    private INDArray getConvFeatureMapsND4J(INDArray input, INDArray filters, INDArray biases) {
-        int kernelWidth = 5;
-        int padding = 4;
-        INDArray questionConvFeatureMaps = Nd4j.zeros(100, input.columns() + 2*padding - kernelWidth + 1);
-        Conv1d conv = new Conv1d(1, 1, kernelWidth, 1, 4);
-        for (int i = 0; i < filters.size(0); i++) {
-            INDArray filter = filters.get(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.all());
-            INDArray convOutput = conv.forward(input, filter);
-            convOutput.addi(biases.get(NDArrayIndex.point(i)));
-            INDArrayIndex featMapIndex[] = { NDArrayIndex.point(i), NDArrayIndex.all() };
-            questionConvFeatureMaps.put(featMapIndex, convOutput);
-        }
-        Nd4j.getExecutioner().exec(new Tanh(questionConvFeatureMaps));
-        return questionConvFeatureMaps;
-    }
-
-    private INDArray getConvFeatureMapsDL4J(INDArray input, INDArray filters, INDArray biases) {
-        int kernelWidth = 5;
-        int padding = 4;
-        DL4JConv1d conv = new DL4JConv1d(1, filters.size(0), kernelWidth, 1, 4);
-        INDArray questionConvFeatureMaps = conv.forward(input, filters, biases);
-
-        return questionConvFeatureMaps;
+        questionConv = new DL4JConv1d(1, questionConvFilters.size(0), 5, 1, 4, questionConvFilters, questionConvFilterBiases);
+        answerConv = new DL4JConv1d(1, answerConvFilters.size(0), 5, 1, 4, answerConvFilters, answerConvFilterBiases);
     }
 
     public INDArray forward(INDArray question, INDArray answer, INDArray externalFeatures) {
         // Convolution
-        INDArray questionConvFeatureMaps = getConvFeatureMapsDL4J(question, questionConvFilters, questionConvFilterBiases);
-        INDArray answerConvFeatureMaps = getConvFeatureMapsDL4J(answer, answerConvFilters, answerConvFilterBiases);
+        INDArray questionConvFeatureMaps = questionConv.forward(question);
+        INDArray answerConvFeatureMaps = answerConv.forward(answer);
 
         // Pooling
         INDArray questionPooled = Nd4j.max(questionConvFeatureMaps, 1);

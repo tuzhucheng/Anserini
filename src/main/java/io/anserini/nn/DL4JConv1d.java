@@ -22,19 +22,18 @@ public class DL4JConv1d {
     private int kernelSize;
     private int stride;
     private int padding;
+    private MultiLayerNetwork model;
 
-    public DL4JConv1d(int inChannels, int outChannels, int kernelSize, int stride, int padding) {
+    public DL4JConv1d(int inChannels, int outChannels, int kernelSize, int stride, int padding, INDArray filters, INDArray biases) {
         this.inChannels = inChannels;
         this.outChannels = outChannels;
         this.kernelSize = kernelSize;
         this.stride = stride;
         this.padding = padding;
-    }
 
-    public INDArray forward(INDArray input, INDArray filters, INDArray biases) {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .list()
-                .layer(0, new ConvolutionLayer.Builder(input.size(0), this.kernelSize)
+                .layer(0, new ConvolutionLayer.Builder(50, this.kernelSize)
                         .nIn(this.inChannels)
                         .stride(this.stride, this.stride)
                         .nOut(outChannels)
@@ -43,13 +42,18 @@ public class DL4JConv1d {
                         .build())
                 .build();
 
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model = new MultiLayerNetwork(conf);
 
-        model.initializeLayers(input);
+        INDArray initialLayer = Nd4j.ones(1, 1, 50, 20);
+        model.initializeLayers(initialLayer);
         List<INDArray> params = new ArrayList<>();
         params.add(biases);
         params.add(filters);
         model.setParams(Nd4j.toFlattened('f', params));
+    }
+
+    public INDArray forward(INDArray input) {
+        model.initializeLayers(input);
         int[] shape = {1, 1, input.size(0), input.size(1)};
         INDArray i = Nd4j.createUninitialized(shape);
         for (int j = 0; j < input.size(0); j++) {
