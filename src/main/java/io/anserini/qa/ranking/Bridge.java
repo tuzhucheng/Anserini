@@ -1,5 +1,6 @@
 package io.anserini.qa.ranking;
 
+import io.anserini.embeddings.TermNotFoundException;
 import io.anserini.embeddings.WordEmbeddingDictionary;
 import org.kohsuke.args4j.*;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -85,7 +86,7 @@ public class Bridge {
       if (vocabDictionary.keySet().contains(term)) {
         try {
           wordVector = Nd4j.create(wordEmbeddingDictionary.getEmbeddingVector(term));
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (TermNotFoundException e) {
           System.out.println(term + " is in dimensions but not in index.");
           wordVector = unknownVector;
         }
