@@ -170,7 +170,7 @@ public class Bridge {
           long end = System.nanoTime();
           long elapsed = end - start;
           totalElapsed += elapsed;
-          count += 1;
+          count += answerList.size();
 
           // 32.1 0 1 0 0.13309887051582336 smmodel
           int i = 0;
