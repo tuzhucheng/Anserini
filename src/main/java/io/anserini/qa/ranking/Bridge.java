@@ -86,11 +86,9 @@ public class Bridge {
       if (vocabDictionary.keySet().contains(term)) {
         try {
           wordVector = Nd4j.create(wordEmbeddingDictionary.getEmbeddingVector(term));
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (TermNotFoundException e) {
           System.out.println(term + " is in dimensions but not in index.");
           wordVector = unknownVector;
-        } catch (TermNotFoundException e) {
-          e.printStackTrace();
         }
       } else {
         wordVector = unknownVector;
