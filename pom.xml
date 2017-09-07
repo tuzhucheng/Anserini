@@ -426,9 +426,15 @@
 
     <!--Sesame for parsing triples-->
     <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-ntriples</artifactId>
-        <version>4.1.2</version>
+      <groupId>org.openrdf.sesame</groupId>
+      <artifactId>sesame-rio-ntriples</artifactId>
+      <version>4.1.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>0.10.0</version>
     </dependency>
 
     <dependency>
